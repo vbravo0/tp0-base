@@ -131,3 +131,30 @@ La Parte 2 requiere una sección donde se explique el protocolo de comunicación
 La Parte 3 requiere una sección que expliquen los mecanismos de sincronización utilizados.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+## Desarrollo
+
+### Ejercicio 1
+
+Se copia la configuración de cliente dos veces, reemplazando 1 por 2
+
+```yaml
+  client2:
+    container_name: client2
+    image: client:latest
+    entrypoint: /client
+    environment:
+      - CLI_ID=2
+      - CLI_LOG_LEVEL=DEBUG
+    networks:
+      - testing_net
+    depends_on:
+      - server
+```
+
+Para probar correr los siguientes comandos y ver que aparezca el cliente 2
+
+```bash
+make docker-compose-up
+make docker-compose-logs
+```
