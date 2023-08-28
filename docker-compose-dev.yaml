@@ -22,6 +22,15 @@ services:
       - testing_net
     depends_on:
       - server
+  
+  netcat:
+    container_name: netcat
+    image: subfuzion/netcat
+    networks:
+      - testing_net 
+    depends_on:
+      - server
+    entrypoint: sh -c "if test $(echo 'test' | nc server 12345) = 'test'; then echo 'TEST ECHO OK'; else echo 'TEST ECHO ERROR'; fi"
 
 networks:
   testing_net:
