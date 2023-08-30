@@ -14,7 +14,8 @@ class Server:
         signal.signal(signal.SIGTERM, self.exit_gracefully)
             
     def exit_gracefully(self, *args):
-        print("Closing socket")
+        signal = args[0]
+        logging.info(f'action: exit_gracefully | signal: {signal}')
         self.is_running = False
 
     def run(self):
