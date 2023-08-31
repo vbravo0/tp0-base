@@ -44,11 +44,11 @@ class Server:
         client socket will also be closed
         """
         try:
-            number = common.communication.recv_u32(client_sock)
-            logging.info(f'action: recvU32 {number}')
+            r = common.communication.recv_string(client_sock)
+            logging.info(f'action: recv {r}')
 
-            common.communication.send_u32(client_sock, number+1000)
-            logging.info(f'action: sendU32 {number}')
+            common.communication.send_string(client_sock, r)
+            logging.info(f'action: send {r}')
 
 
             # TODO: Modify the receive to avoid short-reads

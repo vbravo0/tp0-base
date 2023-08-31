@@ -20,15 +20,15 @@ func sendBytes(socket net.Conn, msg []byte) error {
 	return nil
 }
 
-func recvBytes(socket net.Conn, size int) ([]byte, error) {
-	buffer := make([]byte, 1024)
-	dataReceivedCounter := 0
+func recvBytes(socket net.Conn, size uint32) ([]byte, error) {
+	buffer := make([]byte, size)
+	var dataReceivedCounter uint32 = 0
 	for dataReceivedCounter < size {
 		n, err := socket.Read(buffer[dataReceivedCounter:])
 		if err != nil {
 			return buffer, errors.New("socket recv error")
 		}
-		dataReceivedCounter += n
+		dataReceivedCounter += uint32(n)
 	}
 	return buffer, nil
 }
@@ -46,4 +46,34 @@ func recvU32(socket net.Conn) (uint32, error) {
 	}
 	n := binary.BigEndian.Uint32(data)
 	return n, nil
+}
+
+func sendString(socket net.Conn, s string) error {
+	size := uint32(len(s))
+	err := sendU32(socket, size)
+	if err != nil {
+		return err
+	}
+
+	data := []byte(s)
+	err = sendBytes(socket, data)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func recvString(socket net.Conn) (string, error) {
+	size, err := recvU32(socket)
+	if err != nil {
+		return "", err
+	}
+
+	data, err := recvBytes(socket, size)
+	if err != nil {
+		return "", err
+	}
+
+	return string(data[:]), nil
 }

@@ -29,11 +29,13 @@ def recv_u32(socket) -> int:
     return int.from_bytes(data, byteorder=ENDIAN_ORDER, signed=False)
 
 def send_string(socket, s: str):
+    send_u32(socket, len(s))
     data = bytes(s, encoding=STRING_ENCODING)
     send_bytes(socket, data)
 
-def recv_string(socket, size: int) -> str:
+def recv_string(socket) -> str:
+    size = recv_u32(socket)
     data = recv_bytes(socket, size)
-    return data.decode(str=STRING_ENCODING)
+    return data.decode(encoding=STRING_ENCODING)
 
 
