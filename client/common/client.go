@@ -79,6 +79,13 @@ loop:
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
+		var numberU32 uint32 = 123
+		sendU32(c.conn, numberU32)
+		log.Infof("action: sendU32, %v", numberU32)
+
+		n, _ := recvU32(c.conn)
+		log.Infof("action: recvU32, %v", n)
+
 		// TODO: Modify the send to avoid short-write
 		fmt.Fprintf(
 			c.conn,

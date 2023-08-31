@@ -1,6 +1,7 @@
 import socket
 import logging
 import signal
+import common.communication 
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -43,6 +44,13 @@ class Server:
         client socket will also be closed
         """
         try:
+            number = common.communication.recv_u32(client_sock)
+            logging.info(f'action: recvU32 {number}')
+
+            common.communication.send_u32(client_sock, number+1000)
+            logging.info(f'action: sendU32 {number}')
+
+
             # TODO: Modify the receive to avoid short-reads
             msg = client_sock.recv(1024).rstrip().decode('utf-8')
             addr = client_sock.getpeername()
