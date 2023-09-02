@@ -31,8 +31,7 @@ type Client struct {
 // as a parameter
 func NewClient(config ClientConfig) *Client {
 	client := &Client{
-		config:      config,
-		keepRunning: true,
+		config: config,
 	}
 	return client
 }
@@ -62,7 +61,7 @@ func (c *Client) StartClientLoop() {
 
 loop:
 	// Send messages if the loopLapse threshold has not been surpassed
-	for timeout := time.After(c.config.LoopLapse); c.keepRunning; {
+	for timeout := time.After(c.config.LoopLapse); ; {
 		select {
 		case <-timeout:
 			log.Infof("action: timeout_detected | result: success | client_id: %v",
@@ -71,7 +70,6 @@ loop:
 			break loop
 		case <-sigs:
 			log.Infof("action: signal_received")
-			c.keepRunning = false
 			break loop
 		default:
 		}

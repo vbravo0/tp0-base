@@ -3,6 +3,7 @@ package common
 import (
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"net"
 )
 
@@ -76,4 +77,9 @@ func recvString(socket net.Conn) (string, error) {
 	}
 
 	return string(data[:]), nil
+}
+
+func sendBet(socket net.Conn, name string, surname string, document string, birthdate string, number int) error {
+	res := fmt.Sprintf("%v,%v,%v,%v,%v", name, surname, document, birthdate, number)
+	return sendString(socket, res)
 }

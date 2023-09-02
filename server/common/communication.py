@@ -38,4 +38,7 @@ def recv_string(socket) -> str:
     data = recv_bytes(socket, size)
     return data.decode(encoding=STRING_ENCODING)
 
+def recv_bet(socket) -> list:
+    s = recv_string(socket)
+    return s.split(',')
 
