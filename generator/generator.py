@@ -12,7 +12,7 @@ def replace(section):
   out = ""
   for field in fields:
     for i in range(int(field.get('times'))):
-      out += text.replace(field.get('field'), str(i))
+      out += text.replace(field.get('field'), str(i+1))
   
   return out
 
