@@ -114,7 +114,7 @@ func main() {
 	}
 
 	bet := common.NewBet(
-		v.GetString("bet.agency"),
+		v.GetString("id"),
 		v.GetString("bet.name"),
 		v.GetString("bet.surname"),
 		v.GetString("bet.document"),

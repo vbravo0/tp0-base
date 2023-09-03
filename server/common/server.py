@@ -46,8 +46,8 @@ class Server:
         """
         try:
             bet = communication.recv_bet(client_sock)
-            communication.send_string('action: apuesta_recibida | result: success')
-            utils.store_bet([bet])
+            communication.send_string(client_sock, 'action: apuesta_recibida | result: success')
+            utils.store_bets([bet])
             logging.info(f'action: apuesta_almacenada | result: success | dni {bet.document} | numero: {bet.number}')
         except OSError as e:
             logging.error("action: receive_message | result: fail | error: {e}")
