@@ -1,8 +1,6 @@
 package common
 
 import (
-	"bufio"
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -22,9 +20,8 @@ type ClientConfig struct {
 
 // Client Entity that encapsulates how
 type Client struct {
-	config      ClientConfig
-	conn        net.Conn
-	keepRunning bool
+	config ClientConfig
+	conn   net.Conn
 }
 
 // NewClient Initializes a new client receiving the configuration
@@ -53,9 +50,8 @@ func (c *Client) createClientSocket() error {
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop() {
+func (c *Client) StartClientLoop(bet *Bet) {
 	// autoincremental msgID to identify every message sent
-	msgID := 1
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM)
 
@@ -77,35 +73,21 @@ loop:
 		// Create the connection the server in every loop iteration. Send an
 		c.createClientSocket()
 
-		var s string = "hola????!!!"
-		sendString(c.conn, s)
-		log.Infof("action: sending , %v", s)
-
-		r, _ := recvString(c.conn)
-		log.Infof("action: recv, %v", r)
-
-		// TODO: Modify the send to avoid short-write
-		fmt.Fprintf(
-			c.conn,
-			"[CLIENT %v] Message N°%v\n",
-			c.config.ID,
-			msgID,
-		)
-		msg, err := bufio.NewReader(c.conn).ReadString('\n')
-		msgID++
-		c.conn.Close()
-
-		if err != nil {
-			log.Errorf("action: receive_message | result: fail | client_id: %v | error: %v",
-				c.config.ID,
-				err,
+		if err := sendBet(c.conn, bet); err != nil {
+			log.Errorf("action: send_bet | result: fail | document: %v | number: %v",
+				bet.document,
+				bet.number,
 			)
 			return
 		}
-		log.Infof("action: receive_message | result: success | client_id: %v | msg: %v",
-			c.config.ID,
-			msg,
-		)
+
+		if _, err := recvString(c.conn); err != nil {
+			log.Errorf("action: recv_string | result: fail | document: %v | number: %v",
+				bet.document,
+				bet.number,
+			)
+			return
+		}
 
 		// Wait a time between sending one message and the next one
 		time.Sleep(c.config.LoopPeriod)

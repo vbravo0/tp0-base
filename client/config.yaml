@@ -6,3 +6,10 @@ loop:
   period: "5s"
 log:
   level: "info"
+bet:
+  name: "Santiago Lionel"
+  surname: "Lorca"
+  document: "30904465"
+  birthdate: "1999-03-17"
+  number: "7574"
+

@@ -1,3 +1,5 @@
+from common.utils import Bet 
+
 BUFSIZE = 1024
 SIZE_U32 = 4
 ENDIAN_ORDER = 'big'
@@ -38,7 +40,9 @@ def recv_string(socket) -> str:
     data = recv_bytes(socket, size)
     return data.decode(encoding=STRING_ENCODING)
 
-def recv_bet(socket) -> list:
+def recv_bet(socket) -> Bet:
     s = recv_string(socket)
-    return s.split(',')
+    fields = s.split(',')
+    print(fields)
+    return Bet(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5])
 

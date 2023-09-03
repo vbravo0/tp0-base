@@ -35,6 +35,12 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "lapse")
 	v.BindEnv("log", "level")
+	v.BindEnv("bet", "agency")
+	v.BindEnv("bet", "name")
+	v.BindEnv("bet", "surname")
+	v.BindEnv("bet", "document")
+	v.BindEnv("bet", "birthdate")
+	v.BindEnv("bet", "number")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -66,11 +72,11 @@ func InitLogger(logLevel string) error {
 		return err
 	}
 
-    customFormatter := &logrus.TextFormatter{
-      TimestampFormat: "2006-01-02 15:04:05",
-      FullTimestamp: false,
-    }
-    logrus.SetFormatter(customFormatter)
+	customFormatter := &logrus.TextFormatter{
+		TimestampFormat: "2006-01-02 15:04:05",
+		FullTimestamp:   false,
+	}
+	logrus.SetFormatter(customFormatter)
 	logrus.SetLevel(level)
 	return nil
 }
@@ -79,12 +85,12 @@ func InitLogger(logLevel string) error {
 // For debugging purposes only
 func PrintConfig(v *viper.Viper) {
 	logrus.Infof("action: config | result: success | client_id: %s | server_address: %s | loop_lapse: %v | loop_period: %v | log_level: %s",
-	    v.GetString("id"),
-	    v.GetString("server.address"),
-	    v.GetDuration("loop.lapse"),
-	    v.GetDuration("loop.period"),
-	    v.GetString("log.level"),
-    )
+		v.GetString("id"),
+		v.GetString("server.address"),
+		v.GetDuration("loop.lapse"),
+		v.GetDuration("loop.period"),
+		v.GetString("log.level"),
+	)
 }
 
 func main() {
@@ -107,6 +113,15 @@ func main() {
 		LoopPeriod:    v.GetDuration("loop.period"),
 	}
 
+	bet := common.NewBet(
+		v.GetString("bet.agency"),
+		v.GetString("bet.name"),
+		v.GetString("bet.surname"),
+		v.GetString("bet.document"),
+		v.GetString("bet.birthdate"),
+		v.GetString("bet.number"),
+	)
+
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop()
+	client.StartClientLoop(bet)
 }
