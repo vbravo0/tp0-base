@@ -48,7 +48,6 @@ class Server:
         while True:
             try:
                 chunk = communication.recv_string(client_sock)
-                print("CHUNK: ", chunk)
                 if len(chunk) == 0:
                     communication.send_string(client_sock, "ok")
                     break
