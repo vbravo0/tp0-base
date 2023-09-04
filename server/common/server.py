@@ -99,9 +99,7 @@ class Server:
     def handle_winners_request(self, client_sock, winners):
         agency = communication.recv_u32(client_sock)
         agency_winners = winners.get(agency, [])
-        logging.info(f"Agency winners: {agency_winners}")
         chunk = bet_serializer.bet_documents_to_chunk(agency_winners)
-        logging.info(f"Chunk:{chunk}")
         communication.send_string(client_sock, chunk)
 
 

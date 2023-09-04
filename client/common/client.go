@@ -123,7 +123,6 @@ func (c *Client) StartClientLoop() {
 		log.Errorf("action: recv string chunk | result: fail | error: %v", err)
 	}
 
-	log.Infof("chunk %v, len: %v", chunk, len(chunk))
 	bets := bet_documents_from_chunk(chunk)
 	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(bets))
 
