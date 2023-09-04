@@ -4,6 +4,7 @@ import signal
 from common import communication
 from common import utils
 from common import bet_serializer
+from multiprocessing import Process
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -35,18 +36,31 @@ class Server:
         # the server
         while self.is_running:
             client_socks = []
+            store_procs = []
+            winning_procs = []
 
             for _ in range(self.agencies):
                 client_sock = self.__accept_new_connection()
                 client_socks.append(client_sock)
-                self.__store_bets(client_sock)
+
+            for client_sock in client_socks:
+                p = Process(target=self.__store_bets, args=(client_sock,))
+                store_procs.append(p)
+                p.start()
+            
+            for p in store_procs:
+                p.join()
 
             winners = self.check_winners()
 
             for client_sock in client_socks:
-                self.handle_winners_request(client_sock, winners)
-                client_sock.close()            
+                p = Process(target=self.handle_winners_request, args=(client_sock, winners))
+                winning_procs.append(p)
+                p.start()
 
+            for p in winning_procs:
+                p.join()
+                       
         self._server_socket.close()
 
     def __store_bets(self, client_sock):
@@ -101,6 +115,7 @@ class Server:
         agency_winners = winners.get(agency, [])
         chunk = bet_serializer.bet_documents_to_chunk(agency_winners)
         communication.send_string(client_sock, chunk)
+        client_sock.close()
 
 
       
