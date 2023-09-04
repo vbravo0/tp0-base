@@ -3,8 +3,6 @@ package common
 import (
 	"fmt"
 	"strings"
-
-	log "github.com/sirupsen/logrus"
 )
 
 func bet_to_string(bet *Bet) string {
@@ -21,10 +19,6 @@ func bet_to_string(bet *Bet) string {
 
 func bet_from_string(s string) *Bet {
 	fields := strings.Split(s, ",")
-	if len(fields) < 6 {
-		log.Infof("s: %v", s)
-	}
-
 	return NewBet(fields[0], fields[1], fields[2], fields[3], fields[4], fields[5])
 }
 

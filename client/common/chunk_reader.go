@@ -3,8 +3,6 @@ package common
 import (
 	"bufio"
 	"os"
-
-	log "github.com/sirupsen/logrus"
 )
 
 type ChunkReader struct {
@@ -32,7 +30,6 @@ func (self *ChunkReader) read() ([]string, error) {
 		lines = append(lines, line)
 	}
 
-	log.Infof("lines: %v", lines)
 	return lines, self.scanner.Err()
 }
 

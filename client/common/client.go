@@ -61,7 +61,6 @@ func (c *Client) StartClientLoop() {
 
 	filename := strings.Replace(c.config.Filename, "{id}", c.config.ID, 1)
 
-	log.Infof("CHUNKSIZE: %v", c.config.ChunkSize)
 	chunkReader, err := newChunkReader(filename, c.config.ChunkSize)
 	if err != nil {
 		log.Errorf("action: new_chunk_reader | result: fail | error: %v", err)

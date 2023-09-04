@@ -18,26 +18,26 @@ docker-compose:
     loop: 
       field: "{id}"
       times: 5
-    text: |
-      client{id}:
-        container_name: client{id}
-        image: client:latest
-        entrypoint: /client
-        environment:
-          - CLI_ID={id}
-          - CLI_LOG_LEVEL=DEBUG
-        networks:
-          - testing_net
-        depends_on:
-          - server
-        volumes:
-          - ./.data/dataset/agency-{id}.csv:/agency-{id}.csv
+    text: |2
+        client{id}:
+          container_name: client{id}
+          image: client:latest
+          entrypoint: /client
+          environment:
+            - CLI_ID={id}
+            - CLI_LOG_LEVEL=DEBUG
+          networks:
+            - testing_net
+          depends_on:
+            - server
+          volumes:
+            - ./.data/dataset/agency-{id}.csv:/agency-{id}.csv
         
   - item: "2"
     text: | 
       networks:
-      testing_net:
-        ipam:
-          driver: default
-          config:
-            - subnet: 172.25.125.0/24
+        testing_net:
+          ipam:
+            driver: default
+            config:
+              - subnet: 172.25.125.0/24
