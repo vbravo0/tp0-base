@@ -4,6 +4,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -106,4 +107,25 @@ func (c *Client) StartClientLoop() {
 	}
 
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
+
+	id, err := strconv.Atoi(c.config.ID)
+	if err != nil {
+		log.Errorf("action: atoi | result: fail | error: %v", err)
+	}
+
+	err = sendU32(c.conn, uint32(id))
+	if err != nil {
+		log.Errorf("action: send_u32 | result: fail | error: %v", err)
+	}
+
+	chunk, err := recvString(c.conn)
+	if err != nil {
+		log.Errorf("action: recv string chunk | result: fail | error: %v", err)
+	}
+
+	log.Infof("chunk %v, len: %v", chunk, len(chunk))
+	bets := bet_documents_from_chunk(chunk)
+	log.Infof("action: consulta_ganadores | result: success | cant_ganadores: %v", len(bets))
+
+	log.Infof("action: lottery_finished | result: success | client_id: %v", c.config.ID)
 }

@@ -11,6 +11,7 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self.agencies = listen_backlog
         
         # Graceful exit
         self.is_running = True
@@ -33,12 +34,22 @@ class Server:
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
         while self.is_running:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+            client_socks = []
+
+            for _ in range(self.agencies):
+                client_sock = self.__accept_new_connection()
+                client_socks.append(client_sock)
+                self.__store_bets(client_sock)
+
+            winners = self.check_winners()
+
+            for client_sock in client_socks:
+                self.handle_winners_request(client_sock, winners)
+                client_sock.close()            
 
         self._server_socket.close()
 
-    def __handle_client_connection(self, client_sock):
+    def __store_bets(self, client_sock):
         """
         Read message from a specific client socket and closes the socket
 
@@ -57,7 +68,6 @@ class Server:
             except OSError as e:
                 logging.error("action: receive_message | result: fail | error: {e}")
                 break
-        client_sock.close()
 
     def __accept_new_connection(self):
         """
@@ -72,3 +82,28 @@ class Server:
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return c
+    
+    def check_winners(self):
+        bets = utils.load_bets()
+        winners = [bet for bet in bets if utils.has_won(bet)]
+
+        res = {}
+        for winner in winners:
+            if winner.agency not in res.keys():
+                res[winner.agency] = []
+            res[winner.agency].append(winner)
+
+        logging.info(f"res: {res}")
+        return res
+    
+    def handle_winners_request(self, client_sock, winners):
+        agency = communication.recv_u32(client_sock)
+        agency_winners = winners.get(agency, [])
+        logging.info(f"Agency winners: {agency_winners}")
+        chunk = bet_serializer.bet_documents_to_chunk(agency_winners)
+        logging.info(f"Chunk:{chunk}")
+        communication.send_string(client_sock, chunk)
+
+
+      
+

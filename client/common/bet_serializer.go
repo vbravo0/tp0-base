@@ -49,3 +49,16 @@ func bets_array_add_agency(agency string, a []string) []string {
 	}
 	return res
 }
+
+func bet_documents_from_chunk(chunk string) []string {
+	documents := make([]string, 0)
+	if len(chunk) == 0 {
+		return documents
+	}
+
+	lines := strings.Split(chunk, ",")
+	for _, line := range lines {
+		documents = append(documents, line)
+	}
+	return documents
+}
