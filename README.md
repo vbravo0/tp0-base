@@ -144,49 +144,23 @@ Se crea un generador de archivos Docker Compose que dado un archivo YAML estruct
 pip install -r requirements
 ```
 
-#### Archivo input
+#### Archivo base
 
 Es un archivo YAML dividido en las siguientes secciones
 
 ```yaml
-docker-compose: [
-  {
-    text: " ... ", --> seccion de docker-compose
-    replace-loop: [ --> opcional, pero de estar reemplaza y repite
-      {
-        field: "ABC", --> texto a reemplazar
-        times: N  --> cantidad de veces a reemplazar
-      }
-    ]
-  }
-]
+docker-compose: 
+  - loop: --> opcional, pero de estar reemplaza y repite
+      field: "ABC", --> texto a reemplazar
+      times: N  --> cantidad de veces a reemplazar. El reemplazo empieza desde el 1. Si N es 3, entonces [1, 2, 3]
+    text: | 
+      seccion del 
+      docker compose
+      a reemplazar
+      pueden ser multiples lineas
 ```
 
-Ejemplo
-
-```yaml
-docker-compose: [
-  {
-    text: "version: '3.9 \n",
-  },
-  {
-    text: "client{ID} \n",
-    replace-loop: [
-      {
-        field: "{ID}",
-        times: 2
-      }
-    ]
-  },
-  {
-    text: "network \n"
-  }
-]
-```
-
-Reemplaza el ID dos veces de con id 0 y 1. Los otros campos los escribe una unica vez. 
-
-#### Modo de uso
+#### Ejecucion
 
 Campos obligatorios
 - input: Archivo de entrada con la estructura ya mencionada 
@@ -196,11 +170,42 @@ Campos obligatorios
 python generator.py --input docker-base.yml --output out.yml
 ```
 
-Para el ejemplo anterior sería:
+### Ejemplo
+
+Tomando al siguiente codigo como base
+```yaml
+# docker-base.yml
+docker-compose: 
+  - text: |
+    version: '3.9'
+    services:
+ 
+  - loop: 
+    field: "{id}"
+    times: 2
+    text: |2
+      client{id}:
+        container_name: client{id}
+        image: client:latest
+```
+
+Y ejecutandolo como 
+
+```bash
+python generator.py --input docker-base.yml --output out.yml
+```
+
+Devuelve un archivo donde reemplaza el ID dos veces de con id 1, 2 (empieza en 1). Los otros campos los escribe una unica vez. 
 
 ```yaml
 version: '3.9'
+services:
+
 client1:
+  container_name: client1
+  image: client:latest
+
 client2:
-network:
+  container_name: client2
+  image: client:latest
 ```

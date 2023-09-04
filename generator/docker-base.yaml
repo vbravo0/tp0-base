@@ -1,6 +1,5 @@
 docker-compose: 
-  - item: "0"
-    text: | 
+  - text: | 
       version: '3.9'
       name: tp0
       services:
@@ -14,8 +13,7 @@ docker-compose:
           networks:
             - testing_net
           
-  - item: "1"
-    loop: 
+  - loop: 
       field: "{id}"
       times: 5
     text: |2
@@ -33,8 +31,7 @@ docker-compose:
           volumes:
             - ./.data/dataset/agency-{id}.csv:/agency-{id}.csv
         
-  - item: "2"
-    text: | 
+  - text: | 
       networks:
         testing_net:
           ipam:
