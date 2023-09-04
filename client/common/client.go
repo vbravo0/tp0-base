@@ -4,6 +4,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -16,6 +17,9 @@ type ClientConfig struct {
 	ServerAddress string
 	LoopLapse     time.Duration
 	LoopPeriod    time.Duration
+	Path          string
+	Filename      string
+	ChunkSize     int
 }
 
 // Client Entity that encapsulates how
@@ -50,47 +54,56 @@ func (c *Client) createClientSocket() error {
 }
 
 // StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop(bet *Bet) {
+func (c *Client) StartClientLoop() {
 	// autoincremental msgID to identify every message sent
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM)
 
-loop:
-	// Send messages if the loopLapse threshold has not been surpassed
-	for timeout := time.After(c.config.LoopLapse); ; {
+	filename := strings.Replace(c.config.Filename, "{id}", c.config.ID, 1)
+
+	log.Infof("CHUNKSIZE: %v", c.config.ChunkSize)
+	chunkReader, err := newChunkReader(filename, c.config.ChunkSize)
+	if err != nil {
+		log.Errorf("action: new_chunk_reader | result: fail | error: %v", err)
+		return
+	}
+
+	c.createClientSocket()
+
+	for {
 		select {
-		case <-timeout:
-			log.Infof("action: timeout_detected | result: success | client_id: %v",
-				c.config.ID,
-			)
-			break loop
 		case <-sigs:
 			log.Infof("action: signal_received")
-			break loop
+			break
 		default:
 		}
 
-		// Create the connection the server in every loop iteration. Send an
-		c.createClientSocket()
-
-		if err := sendBet(c.conn, bet); err != nil {
-			log.Errorf("action: send_bet | result: fail | document: %v | number: %v",
-				bet.document,
-				bet.number,
-			)
-			return
+		lines, err := chunkReader.read()
+		if err != nil {
+			log.Errorf("action: chunk_reader_read | result: fail | error: %v", err)
+			break
 		}
 
-		if _, err := recvString(c.conn); err != nil {
-			log.Errorf("action: recv_string | result: fail | document: %v | number: %v",
-				bet.document,
-				bet.number,
-			)
-			return
+		lines_with_agency := bets_array_add_agency(c.config.ID, lines)
+		bets := bets_from_array(lines_with_agency)
+		chunk := bets_to_chunk(bets)
+
+		err = sendString(c.conn, chunk)
+		if err != nil {
+			log.Errorf("action: send_string | result: fail | error: %v", err)
+			break
 		}
 
+		if len(lines) == 0 {
+			resp, err := recvString(c.conn)
+			if err != nil {
+				log.Errorf("action: recv_string | result: fail | error: %v", err)
+			}
+			log.Infof("action: recv_string | result: success | msg: %v", resp)
+			break
+		}
 		// Wait a time between sending one message and the next one
-		time.Sleep(c.config.LoopPeriod)
+		//time.Sleep(c.config.LoopPeriod)
 	}
 
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)

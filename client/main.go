@@ -35,12 +35,9 @@ func InitConfig() (*viper.Viper, error) {
 	v.BindEnv("loop", "period")
 	v.BindEnv("loop", "lapse")
 	v.BindEnv("log", "level")
-	v.BindEnv("bet", "agency")
-	v.BindEnv("bet", "name")
-	v.BindEnv("bet", "surname")
-	v.BindEnv("bet", "document")
-	v.BindEnv("bet", "birthdate")
-	v.BindEnv("bet", "number")
+	v.BindEnv("dataset", "path")
+	v.BindEnv("dataset", "filename")
+	v.BindEnv("dataset", "chunksize")
 
 	// Try to read configuration from config file. If config file
 	// does not exists then ReadInConfig will fail but configuration
@@ -111,17 +108,11 @@ func main() {
 		ID:            v.GetString("id"),
 		LoopLapse:     v.GetDuration("loop.lapse"),
 		LoopPeriod:    v.GetDuration("loop.period"),
+		Path:          v.GetString("dataset.path"),
+		Filename:      v.GetString("dataset.filename"),
+		ChunkSize:     v.GetInt("dataset.chunksize"),
 	}
 
-	bet := common.NewBet(
-		v.GetString("id"),
-		v.GetString("bet.name"),
-		v.GetString("bet.surname"),
-		v.GetString("bet.document"),
-		v.GetString("bet.birthdate"),
-		v.GetString("bet.number"),
-	)
-
 	client := common.NewClient(clientConfig)
-	client.StartClientLoop(bet)
+	client.StartClientLoop()
 }

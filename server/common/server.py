@@ -3,6 +3,7 @@ import logging
 import signal
 from common import communication
 from common import utils
+from common import bet_serializer
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -44,15 +45,20 @@ class Server:
         If a problem arises in the communication with the client, the
         client socket will also be closed
         """
-        try:
-            bet = communication.recv_bet(client_sock)
-            communication.send_string(client_sock, 'action: apuesta_recibida | result: success')
-            utils.store_bets([bet])
-            logging.info(f'action: apuesta_almacenada | result: success | dni {bet.document} | numero: {bet.number}')
-        except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
-        finally:
-            client_sock.close()
+        while True:
+            try:
+                chunk = communication.recv_string(client_sock)
+                print("CHUNK: ", chunk)
+                if len(chunk) == 0:
+                    communication.send_string(client_sock, "ok")
+                    break
+                bets = bet_serializer.bets_from_chunk(chunk)
+                utils.store_bets(bets)
+                logging.info(f'action: apuesta_almacenada | result: success')
+            except OSError as e:
+                logging.error("action: receive_message | result: fail | error: {e}")
+                break
+        client_sock.close()
 
     def __accept_new_connection(self):
         """

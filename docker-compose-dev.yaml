@@ -22,6 +22,8 @@ services:
       - testing_net
     depends_on:
       - server
+    volumes:
+      - ./.data/dataset/agency-1.csv:/agency-1.csv
 
   client2:
     container_name: client2
