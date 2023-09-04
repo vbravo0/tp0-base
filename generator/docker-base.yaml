@@ -1,0 +1,43 @@
+docker-compose: 
+  - item: "0"
+    text: | 
+      version: '3.9'
+      name: tp0
+      services:
+        server:
+          container_name: server
+          image: server:latest
+          entrypoint: python3 /main.py
+          environment:
+            - PYTHONUNBUFFERED=1
+            - LOGGING_LEVEL=DEBUG
+          networks:
+            - testing_net
+          
+  - item: "1"
+    loop: 
+      field: "{id}"
+      times: 5
+    text: |2
+        client{id}:
+          container_name: client{id}
+          image: client:latest
+          entrypoint: /client
+          environment:
+            - CLI_ID={id}
+            - CLI_LOG_LEVEL=DEBUG
+          networks:
+            - testing_net
+          depends_on:
+            - server
+          volumes:
+            - ./.data/dataset/agency-{id}.csv:/agency-{id}.csv
+        
+  - item: "2"
+    text: | 
+      networks:
+        testing_net:
+          ipam:
+            driver: default
+            config:
+              - subnet: 172.25.125.0/24

@@ -7,12 +7,12 @@ def save_to_file(parsed_yaml, output):
 
 def replace(section):
   text = section.get('text')
-  fields = section.get('replace-loop')
+  field = section.get('loop').get('field')
+  times = section.get('loop').get('times')
 
   out = ""
-  for field in fields:
-    for i in range(int(field.get('times'))):
-      out += text.replace(field.get('field'), str(i))
+  for i in range(int(times)):
+    out += text.replace(field, str(i+1))
   
   return out
 
@@ -20,8 +20,7 @@ def parse(data):
   out_yaml = ""
 
   for section in data.get('docker-compose'):
-    new = ""
-    if section.get('replace-loop'):
+    if section.get('loop'):
       new = replace(section)
     else:
       new = section.get('text')
