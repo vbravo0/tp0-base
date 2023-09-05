@@ -4,7 +4,7 @@ import signal
 from common import communication
 from common import utils
 from common import bet_serializer
-from multiprocessing import Process
+from multiprocessing import Process, Lock
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -38,13 +38,14 @@ class Server:
             client_socks = []
             store_procs = []
             winning_procs = []
+            lock = Lock()
 
             for _ in range(self.agencies):
                 client_sock = self.__accept_new_connection()
                 client_socks.append(client_sock)
 
             for client_sock in client_socks:
-                p = Process(target=self.__store_bets, args=(client_sock,))
+                p = Process(target=self.__store_bets, args=(client_sock, lock))
                 store_procs.append(p)
                 p.start()
             
@@ -63,7 +64,7 @@ class Server:
                        
         self._server_socket.close()
 
-    def __store_bets(self, client_sock):
+    def __store_bets(self, client_sock, lock):
         """
         Read message from a specific client socket and closes the socket
 
@@ -77,7 +78,9 @@ class Server:
                     communication.send_string(client_sock, "ok")
                     break
                 bets = bet_serializer.bets_from_chunk(chunk)
+                lock.acquire()
                 utils.store_bets(bets)
+                lock.release()
                 logging.info(f'action: apuesta_almacenada | result: success')
             except OSError as e:
                 logging.error("action: receive_message | result: fail | error: {e}")
