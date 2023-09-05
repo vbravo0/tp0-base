@@ -162,3 +162,16 @@ En detalle ocurre lo siguiente:
 
 ### Parte 3: Mecanismos de sincronización
 
+La sincronización se realiza mediante las lecturas bloqueantes del socket y los joins a los procesos.
+
+Funciona de la siguiente forma
+1. Un cliente se conecta con el servidor
+2. El servidor crea un proceso que recibe todos las apuestas en varios chunks y luego las almacena (ChunkHandler). Espera hasta 5 agencias.
+3. El servidor espera en el join de los procesos
+4. El server al volver del join, calcula los ganadores de cada agencia y los guarda en un diccionario
+5. A su vez, cada cliente consulta por sus ganadores enviando su ID
+6. El server recibe la petición y crea un proceso (Winners) para que responda los ganadores y se bloquea a que finalicen
+7. El cliente se bloquea para recibir a sus ganadores. Al recibirlos termina.
+8. Cuando los procesos terminan, el server vuelve al inicio para tomar chunks de las agencias
+
+![Alt text](sincronizacion.drawio-process.png)
