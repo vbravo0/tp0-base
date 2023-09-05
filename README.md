@@ -134,3 +134,57 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 
 ## Desarrollo ej4
 
+Para cerrar ambos servicios de forma graceful se utilizan las siguientes herramientas 
+
+### docker compose stop|down -t
+Se utiliza el argument `-t` de `docker compose stop` para dar un tiempo entre que se envia `SIGTERM` y `SIGKILL`. Por defecto es 10 segundos.    
+Para `docker compose down` en cambio, da tiempo antes de eliminar la red y los contenedores.
+
+### Canales en el cliente
+En gp se utiliza un canal para recibir la señal y si cuando el proceso encuentra que se envió una al inicio del ciclo, sale del mismo.
+
+```go
+  // Creación del canal del tipo señal atento al tipo SIGTERM
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGTERM)
+
+loop:
+	for timeout := time.After(c.config.LoopLapse); ; {
+		select {
+		case <-timeout:
+			log.Infof("action: timeout_detected | result: success | client_id: %v",
+				c.config.ID,
+			)
+			break loop
+		case <-sigs:
+      // Cuando se encuentra con una señal, termina el ciclo
+			log.Infof("action: signal_received")
+			break loop
+		default:
+		}
+```
+
+### Libreria signal en el server
+En python se utilza la libreria `signal` donde mediante la función del mismo nombre se puede indicar que función ejecutar tras recibir la señal
+
+```python
+class Server:
+    def __init__(self, port, listen_backlog):
+        # Se indica que tras llegar SIGTERM debe ejecutarse exit_gracefully
+        self.is_running = True
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+
+    # Cuando se ejecuta, deja la flag is_running en falso para terminar el ciclo
+    def exit_gracefully(self, *args):
+      signal = args[0]
+      logging.info(f'action: exit_gracefully | signal: {signal}')
+      self.is_running = False
+
+    def run(self):
+      # Sale del ciclo si es falso
+      while self.is_running:
+          client_sock = self.__accept_new_connection()
+          self.__handle_client_connection(client_sock)
+```
+
+
