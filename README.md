@@ -134,4 +134,31 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 
 ## Desarrollo
 
-El TP está dividido en ramas de nombre ej{n}, n: numero de ejercicio, y al final del README se encuentra su respectivo desarrollo
+### Modo de ejecicion de cada ejercicio
+1. Posicionarse en la rama ej{n} con n el numero de ejercicio
+2. Levantar el ambiente con `make docker compose up`, bajarlo con `make docker compose down`
+3. Para el ejercicio 6, 7 y 8 que dependen de archivos, primero descomprimirlos en su carpeta `dataset`
+
+### Parte 2: Protocolo de comunicación 
+
+La comunicación se hace mayoritariamente mediante strings
+
+En detalle ocurre lo siguiente:
+
+1. Strings: Se compone de
+  - tamaño: Entero sin signo bigendian de 32 bits (4 btyes)
+  - Bytes: Bytes de un string codificado en utf-8
+
+  ```
+  ---------------------
+  | size | string ....|
+  ---------------------
+  ```
+2. Multiple strings: Se separan por coma dentro del string principal. Usos
+  - Apuestas: Cada campo se separa por coma dentro del string. Ej: "agencia,nombre,apellido,documento,fecha,numero"
+  - Multiples DNI ganadores: Cada DNI separado por coma. Ej: "123,234,456"
+3. Multiples lineas: Se separan por newline \n dentro del string principal
+  - Chunk de apuestas: "1,Ana,Bern,1234,2000-01-01,123\n2,Bob,Viel,5678,2020-01-02,3456"
+
+### Parte 3: Mecanismos de sincronización
+
