@@ -131,3 +131,27 @@ La Parte 2 requiere una sección donde se explique el protocolo de comunicación
 La Parte 3 requiere una sección que expliquen los mecanismos de sincronización utilizados.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+
+## Dessarrollo ej3
+
+Se agrega el servicio netcat, que se basa en `subfuzion/netcat`. Al estar conectado a la misma red, `testing_net`, puede conectarse con los demás. 
+
+Al iniciar, ejecuta el siguiente comando que envia el string `'test'` al server y comprueba que haya recibido el mismo string. De ser asi, imprime `TEST ECHO OK`, si no `TEST ECHO ERROR`.
+
+```bash
+sh -c "if test $(echo 'test' | nc server 12345) = 'test'; then echo 'TEST ECHO OK'; else echo 'TEST ECHO ERROR'; fi" `
+```
+
+Servicio agregado:
+
+```yaml
+  netcat:
+    container_name: netcat
+    image: subfuzion/netcat
+    networks:
+      - testing_net 
+    depends_on:
+      - server
+    entrypoint: sh -c "if test $(echo 'test' | nc server 12345) = 'test'; then echo 'TEST ECHO OK'; else echo 'TEST ECHO ERROR'; fi"
+```
