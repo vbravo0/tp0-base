@@ -131,3 +131,40 @@ La Parte 2 requiere una sección donde se explique el protocolo de comunicación
 La Parte 3 requiere una sección que expliquen los mecanismos de sincronización utilizados.
 
 Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los criterios de corrección provistos [en el campus](https://campusgrado.fi.uba.ar/mod/page/view.php?id=73393).
+
+## Desarrollo ej2
+
+Se agrega el campo `volumes` mapeando el archivo del host con el del container. 
+
+```yaml
+version: '3.9'
+name: tp0
+services:
+  server:
+    container_name: server
+    image: server:latest
+    entrypoint: python3 /main.py
+    environment:
+      - PYTHONUNBUFFERED=1
+      - LOGGING_LEVEL=DEBUG
+    networks:
+      - testing_net
+    # Se agrega volumes relacionando los archivos
+    volumes:
+      - ./server/config.ini:/config.ini
+
+  client1:
+    container_name: client1
+    image: client:latest
+    entrypoint: /client
+    environment:
+      - CLI_ID=1
+      - CLI_LOG_LEVEL=DEBUG
+    networks:
+      - testing_net
+    depends_on:
+      - server
+    # Se agrega volumes relacionando los archivos 
+    volumes:
+      - ./client/config.yaml:/config.yaml
+```
