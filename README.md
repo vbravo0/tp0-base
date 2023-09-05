@@ -162,11 +162,11 @@ En detalle ocurre lo siguiente:
 
 ### Parte 3: Mecanismos de sincronización
 
-La sincronización se realiza mediante las lecturas bloqueantes del socket y los joins a los procesos.
+La sincronización se realiza mediante las lecturas bloqueantes del sockes, los joins a los procesos y locks.
 
 Funciona de la siguiente forma
 1. Un cliente se conecta con el servidor
-2. El servidor crea un proceso que recibe todos las apuestas en varios chunks y luego las almacena (ChunkHandler). Espera hasta 5 agencias.
+2. El servidor crea un proceso (ChunkHandler) que recibe todos las apuestas en varios chunks y las almacena tomando el lock usado con store_bets. El server espera hasta 5 agencias.
 3. El servidor espera en el join de los procesos
 4. El server al volver del join, calcula los ganadores de cada agencia y los guarda en un diccionario
 5. A su vez, cada cliente consulta por sus ganadores enviando su ID
