@@ -165,13 +165,15 @@ En detalle ocurre lo siguiente:
 La sincronización se realiza mediante las lecturas bloqueantes del sockes, los joins a los procesos y locks.
 
 Funciona de la siguiente forma
+1. Se crea un pool de capacidad 5. Uno por cada gencia.
 1. Un cliente se conecta con el servidor
-2. El servidor crea un proceso (ChunkHandler) que recibe todos las apuestas en varios chunks y las almacena tomando el lock usado con store_bets. El server espera hasta 5 agencias.
-3. El servidor espera en el join de los procesos
-4. El server al volver del join, calcula los ganadores de cada agencia y los guarda en un diccionario
+2. El servidor acepta, le pasa el socket al pool junto a un lock para la coordinacion en la escritura al archivo de apuestas
+3. El servidor espera a que termine
+4. Al terminar, el server calcula los ganadores de cada agencia y los guarda en un diccionario
 5. A su vez, cada cliente consulta por sus ganadores enviando su ID
-6. El server recibe la petición y crea un proceso (Winners) para que responda los ganadores y se bloquea a que finalicen
+6. El server recibe las peticiones y le pasa al pool de procesos el socket y el diccionario de ganadores
+7. El trabajador espera la consulta del cliente, y al recibirla responde con los ganadores de esa agencia.
 7. El cliente se bloquea para recibir a sus ganadores. Al recibirlos termina.
-8. Cuando los procesos terminan, el server vuelve al inicio para tomar chunks de las agencias
+8. Cuando los procesos terminan, el server vuelve al inicio para iniciar otro sorteo
 
-![Alt text](sincronizacion.drawio-process.png)
+![Alt text](sincronizacion.drawio-white.png)
