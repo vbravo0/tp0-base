@@ -6,3 +6,7 @@ loop:
   period: "5s"
 log:
   level: "info"
+dataset:
+  filename: "agency-{id}.csv"
+  chunksize: 10
+

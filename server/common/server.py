@@ -1,6 +1,51 @@
 import socket
 import logging
+import signal
+from common import communication
+from common import utils
+from common import bet_serializer
+from multiprocessing import Process, Lock, Pool, Manager
 
+STORE_SUCCESS = True 
+STORE_ERROR = False
+WINNERS_SUCCESS = True 
+WINNERS_ERROR = False
+
+def handle_store_bets(args):
+    """
+    Read message from a specific client socket and closes the socket
+
+    If a problem arises in the communication with the client, the
+    client socket will also be closed
+    """
+    client_sock = args[0]
+    lock = args[1]
+
+    while True:
+        try:
+            chunk = communication.recv_string(client_sock)
+            if len(chunk) == 0:
+                communication.send_string(client_sock, "ok")
+                return STORE_SUCCESS
+            bets = bet_serializer.bets_from_chunk(chunk)
+            lock.acquire()
+            utils.store_bets(bets)
+            lock.release()
+            logging.info(f'action: apuesta_almacenada | result: success')
+        except OSError as e:
+            logging.error("action: receive_message | result: fail | error: {e}")
+            return STORE_ERROR
+    
+def handle_winners(args):
+    client_sock = args[0]
+    winners = args[1]
+
+    agency = communication.recv_u32(client_sock)
+    agency_winners = winners.get(agency, [])
+    chunk = bet_serializer.bet_documents_to_chunk(agency_winners)
+    communication.send_string(client_sock, chunk)
+    client_sock.close()
+    return WINNERS_SUCCESS
 
 class Server:
     def __init__(self, port, listen_backlog):
@@ -8,6 +53,16 @@ class Server:
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.bind(('', port))
         self._server_socket.listen(listen_backlog)
+        self.agencies = listen_backlog
+        
+        # Graceful exit
+        self.is_running = True
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
+            
+    def exit_gracefully(self, *args):
+        signal = args[0]
+        logging.info(f'action: exit_gracefully | signal: {signal}')
+        self.is_running = False
 
     def run(self):
         """
@@ -20,28 +75,45 @@ class Server:
 
         # TODO: Modify this program to handle signal to graceful shutdown
         # the server
-        while True:
-            client_sock = self.__accept_new_connection()
-            self.__handle_client_connection(client_sock)
+        manager = Manager()
+        with Pool(processes=self.agencies) as pool:
+            while self.is_running:
+                client_socks = []
+                lock = manager.Lock()
 
-    def __handle_client_connection(self, client_sock):
-        """
-        Read message from a specific client socket and closes the socket
+                for _ in range(self.agencies):
+                    client_sock = self.__accept_new_connection()
+                    client_socks.append(client_sock)
 
-        If a problem arises in the communication with the client, the
-        client socket will also be closed
-        """
-        try:
-            # TODO: Modify the receive to avoid short-reads
-            msg = client_sock.recv(1024).rstrip().decode('utf-8')
-            addr = client_sock.getpeername()
-            logging.info(f'action: receive_message | result: success | ip: {addr[0]} | msg: {msg}')
-            # TODO: Modify the send to avoid short-writes
-            client_sock.send("{}\n".format(msg).encode('utf-8'))
-        except OSError as e:
-            logging.error("action: receive_message | result: fail | error: {e}")
-        finally:
-            client_sock.close()
+                ret = pool.map(
+                    func=handle_store_bets, 
+                    iterable=[(client_sock, lock) for client_sock in client_socks]
+                )
+                logging.info(f'store_bet ret: {ret}')
+
+                winners = self.check_winners()
+
+                ret = pool.map(
+                    func=handle_winners, 
+                    iterable=[(client_sock, winners) for client_sock in client_socks]
+                )
+                logging.info(f'winner ret: {ret}')
+
+                        
+        self._server_socket.close()
+    
+    def check_winners(self):
+        bets = utils.load_bets()
+        winners = [bet for bet in bets if utils.has_won(bet)]
+
+        res = {}
+        for winner in winners:
+            if winner.agency not in res.keys():
+                res[winner.agency] = []
+            res[winner.agency].append(winner)
+
+        logging.info(f"res: {res}")
+        return res
 
     def __accept_new_connection(self):
         """
@@ -56,3 +128,6 @@ class Server:
         c, addr = self._server_socket.accept()
         logging.info(f'action: accept_connections | result: success | ip: {addr[0]}')
         return c
+
+      
+
