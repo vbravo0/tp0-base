@@ -166,14 +166,15 @@ La sincronización se realiza mediante las lecturas bloqueantes del sockes, los 
 
 Funciona de la siguiente forma
 1. Se crea un pool de capacidad 5. Uno por cada gencia.
-1. Un cliente se conecta con el servidor
-2. El servidor acepta, le pasa el socket al pool junto a un lock para la coordinacion en la escritura al archivo de apuestas
-3. El servidor espera a que termine
-4. Al terminar, el server calcula los ganadores de cada agencia y los guarda en un diccionario
-5. A su vez, cada cliente consulta por sus ganadores enviando su ID
-6. El server recibe las peticiones y le pasa al pool de procesos el socket y el diccionario de ganadores
-7. El trabajador espera la consulta del cliente, y al recibirla responde con los ganadores de esa agencia.
-7. El cliente se bloquea para recibir a sus ganadores. Al recibirlos termina.
-8. Cuando los procesos terminan, el server vuelve al inicio para iniciar otro sorteo
+2. Un cliente se conecta con el servidor
+3. El servidor acepta, y le pasa al pool de procesos un lock y el socket de cada agencia
+4. El worker recibe los chunks y para escribir en el archivo toma el lock. Al terminar, lo libera.
+5. El servidor espera a que termine
+6. Al terminar, el server calcula los ganadores de cada agencia y los guarda en un diccionario
+7. A su vez, cada cliente consulta por sus ganadores enviando su ID
+8. El server recibe las peticiones y le pasa al pool de procesos el socket y el diccionario de ganadores
+9. El trabajador espera la consulta del cliente, y al recibirla responde con los ganadores de esa agencia.
+10. El cliente se bloquea para recibir a sus ganadores. Al recibirlos termina.
+11. Cuando los procesos terminan, el server vuelve al inicio para iniciar otro sorteo
 
 ![Alt text](sincronizacion.drawio-white.png)
