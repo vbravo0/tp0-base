@@ -54,9 +54,7 @@ func (c *Client) createClientSocket() error {
 	return nil
 }
 
-// StartClientLoop Send messages to the client until some time threshold is met
-func (c *Client) StartClientLoop() {
-	// autoincremental msgID to identify every message sent
+func (c *Client) chunkSendingLoop() error {
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGTERM)
 
@@ -67,10 +65,8 @@ func (c *Client) StartClientLoop() {
 
 	if err != nil {
 		log.Errorf("action: new_chunk_reader | result: fail | error: %v", err)
-		return
+		return err
 	}
-
-	c.createClientSocket()
 
 	for {
 		select {
@@ -107,7 +103,16 @@ func (c *Client) StartClientLoop() {
 		// Wait a time between sending one message and the next one
 		//time.Sleep(c.config.LoopPeriod)
 	}
+	return nil
+}
 
+// StartClientLoop Send messages to the client until some time threshold is met
+func (c *Client) StartClientLoop() {
+	// autoincremental msgID to identify every message sent
+
+	c.createClientSocket()
+
+	c.chunkSendingLoop()
 	log.Infof("action: loop_finished | result: success | client_id: %v", c.config.ID)
 
 	id, err := strconv.Atoi(c.config.ID)
