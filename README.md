@@ -134,73 +134,44 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 
 ## Desarrollo
 
-### Ejercicio 1.1
+### Modo de ejecicion de cada ejercicio
+1. Posicionarse en la rama ej{n} con n el numero de ejercicio
+2. Levantar el ambiente con `make docker compose up`, bajarlo con `make docker compose down`
+3. Para el ejercicio 6, 7 y 8 que dependen de archivos, primero descomprimirlos en su carpeta `dataset`
 
-Se crea un generador de archivos Docker Compose que dado un archivo YAML estructurado devuelve un Docker compose repitiendo partes del mismo
+### Parte 2: Protocolo de comunicación 
 
-#### Instalar YAML
+La comunicación se hace mayoritariamente mediante strings
 
-```bash
-pip install -r requirements
-```
+En detalle ocurre lo siguiente:
 
-#### Archivo input
+1. Strings: Se compone de
+  - tamaño: Entero sin signo bigendian de 32 bits (4 btyes)
+  - Bytes: Bytes de un string codificado en utf-8
 
-Es un archivo YAML dividido en las siguientes secciones
+  ```
+  ---------------------
+  | size | string ....|
+  ---------------------
+  ```
+2. Multiple strings: Se separan por coma dentro del string principal. Usos
+  - Apuestas: Cada campo se separa por coma dentro del string. Ej: "agencia,nombre,apellido,documento,fecha,numero"
+  - Multiples DNI ganadores: Cada DNI separado por coma. Ej: "123,234,456"
+3. Multiples lineas: Se separan por newline \n dentro del string principal
+  - Chunk de apuestas: "1,Ana,Bern,1234,2000-01-01,123\n2,Bob,Viel,5678,2020-01-02,3456"
 
-```yaml
-docker-compose: [
-  {
-    text: " ... ", --> seccion de docker-compose
-    replace-loop: [ --> opcional, pero de estar reemplaza y repite
-      {
-        field: "ABC", --> texto a reemplazar
-        times: N  --> cantidad de veces a reemplazar
-      }
-    ]
-  }
-]
-```
+### Parte 3: Mecanismos de sincronización
 
-Ejemplo
+La sincronización se realiza mediante las lecturas bloqueantes del sockes, los joins a los procesos y locks.
 
-```yaml
-docker-compose: [
-  {
-    text: "version: '3.9 \n",
-  },
-  {
-    text: "client{ID} \n",
-    replace-loop: [
-      {
-        field: "{ID}",
-        times: 2
-      }
-    ]
-  },
-  {
-    text: "network \n"
-  }
-]
-```
+Funciona de la siguiente forma
+1. Un cliente se conecta con el servidor
+2. El servidor crea un proceso (ChunkHandler) que recibe todos las apuestas en varios chunks y las almacena tomando el lock usado con store_bets. El server espera hasta 5 agencias.
+3. El servidor espera en el join de los procesos
+4. El server al volver del join, calcula los ganadores de cada agencia y los guarda en un diccionario
+5. A su vez, cada cliente consulta por sus ganadores enviando su ID
+6. El server recibe la petición y crea un proceso (Winners) para que responda los ganadores y se bloquea a que finalicen
+7. El cliente se bloquea para recibir a sus ganadores. Al recibirlos termina.
+8. Cuando los procesos terminan, el server vuelve al inicio para tomar chunks de las agencias
 
-Reemplaza el ID dos veces de con id 0 y 1. Los otros campos los escribe una unica vez. 
-
-#### Modo de uso
-
-Campos obligatorios
-- input: Archivo de entrada con la estructura ya mencionada 
-- ouput: Archivo de salida
-
-```bash
-python generator.py --input docker-base.yml --output out.yml
-```
-
-Para el ejemplo anterior sería:
-
-```yaml
-version: '3.9'
-client1:
-client2:
-network:
-```
+![Alt text](sincronizacion.drawio-process.png)
