@@ -139,6 +139,23 @@ Finalmente, se pide a los alumnos leer atentamente y **tener en cuenta** los cri
 2. Levantar el ambiente con `make docker compose up`, bajarlo con `make docker compose down`
 3. Para el ejercicio 6, 7 y 8 que dependen de archivos, primero descomprimirlos en su carpeta `dataset`
 
+### Part 1: Echo server
+Para poder probar, ir a la rama ej3. 
+Los cambios agregados al archivo yaml son los siguientes
+
+```yaml
+  netcat:
+    container_name: netcat
+    image: subfuzion/netcat
+    networks:
+      - testing_net 
+    depends_on:
+      - server
+    entrypoint: sh -c "if test $(echo 'test' | nc server 12345) = 'test'; then echo 'TEST ECHO OK'; else echo 'TEST ECHO ERROR'; fi"
+```
+
+Estos cambios no estan presentes en las otras ramas
+
 ### Parte 2: Protocolo de comunicación 
 
 La comunicación se hace mayoritariamente mediante strings
